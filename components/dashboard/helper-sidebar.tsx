@@ -1,27 +1,30 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { logout } from '@/lib/auth'
+import type React from "react"
+
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { logout } from "@/lib/auth"
 
 export default function HelperSidebar() {
   const pathname = usePathname()
   const router = useRouter()
 
   const menuItems = [
-    { href: '/dashboard/helper', label: 'Home', icon: 'home' },
-    { href: '/dashboard/helper/my-story', label: 'My Story', icon: 'edit' },
-    { href: '/dashboard/helper/availability', label: 'Availability', icon: 'calendar' },
-    { href: '/dashboard/helper/chat-requests', label: 'Chat Requests', icon: 'message' },
-    { href: '/dashboard/helper/profile', label: 'Profile Settings', icon: 'settings' },
+    { href: "/dashboard/helper", label: "Home", icon: "home" },
+    { href: "/dashboard/helper/my-story", label: "My Story", icon: "edit" },
+    { href: "/dashboard/helper/availability", label: "Availability", icon: "calendar" },
+    { href: "/dashboard/helper/chats", label: "Conversations", icon: "message" },
+    { href: "/dashboard/helper/chat-requests", label: "Chat Requests", icon: "requests" },
+    { href: "/dashboard/helper/profile", label: "Profile Settings", icon: "settings" },
   ]
 
   const isActive = (href: string) => pathname === href
 
   const handleSignOut = () => {
     logout()
-    router.push('/')
+    router.push("/")
   }
 
   return (
@@ -42,11 +45,9 @@ export default function HelperSidebar() {
         {menuItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button
-              variant={isActive(item.href) ? 'default' : 'ghost'}
+              variant={isActive(item.href) ? "default" : "ghost"}
               className={`w-full justify-start gap-3 rounded-lg ${
-                isActive(item.href)
-                  ? 'bg-secondary text-white'
-                  : 'text-foreground hover:bg-muted'
+                isActive(item.href) ? "bg-secondary text-white" : "text-foreground hover:bg-muted"
               }`}
             >
               <IconMap icon={item.icon} />
@@ -57,7 +58,7 @@ export default function HelperSidebar() {
       </nav>
 
       <div className="p-4 border-t border-border space-y-2">
-        <Button onClick={handleSignOut} variant="outline" className="w-full justify-start rounded-lg">
+        <Button onClick={handleSignOut} variant="outline" className="w-full justify-start rounded-lg bg-transparent">
           Sign Out
         </Button>
       </div>
@@ -79,7 +80,11 @@ function IconMap({ icon }: { icon: string }) {
     ),
     calendar: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+        <path
+          fillRule="evenodd"
+          d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+          clipRule="evenodd"
+        />
       </svg>
     ),
     message: (
@@ -87,9 +92,18 @@ function IconMap({ icon }: { icon: string }) {
         <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" />
       </svg>
     ),
+    requests: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042L5.571 9H9V6a1 1 0 011-1h3a1 1 0 011 1v3h3.429l1.034-4.694.005-.021L17.78 3H19a1 1 0 000-2H3z" />
+      </svg>
+    ),
     settings: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+        <path
+          fillRule="evenodd"
+          d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+          clipRule="evenodd"
+        />
       </svg>
     ),
   }
