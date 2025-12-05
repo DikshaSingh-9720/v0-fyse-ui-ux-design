@@ -5,12 +5,17 @@ import { Button } from "@/components/ui/button"
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from "lucide-react"
 import Link from "next/link"
 import VideoStream from "@/components/dashboard/video-stream"
+import { getCurrentUser } from "@/lib/auth"
 
 export default function VideoCallPage() {
   const [isCallActive, setIsCallActive] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [callDuration, setCallDuration] = useState(0)
+
+  const currentUser = getCurrentUser()
+  const seekerName = currentUser?.profile?.name || "You"
+  const seekerInitial = seekerName.charAt(0).toUpperCase()
 
   useEffect(() => {
     if (!isCallActive) return
@@ -31,13 +36,13 @@ export default function VideoCallPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Call Ended</h1>
-            <p className="text-muted-foreground">Thank you for connecting with Morgan!</p>
+            <p className="text-muted-foreground">Thank you for connecting with the helper!</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-6 text-left">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Helper</span>
-                <span className="font-semibold text-foreground">Morgan</span>
+                <span className="text-muted-foreground">Seeker</span>
+                <span className="font-semibold text-foreground">{seekerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Duration</span>
@@ -71,12 +76,12 @@ export default function VideoCallPage() {
       <div className="flex-1 flex items-center justify-center relative gap-4 p-4">
         {/* Remote Video (Helper) */}
         <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10">
-          <VideoStream userName="Morgan" userInitial="M" isVideoOn={isVideoOn} />
+          <VideoStream userName="Helper" userInitial="H" isVideoOn={isVideoOn} />
         </div>
 
         {/* Local Video (Self) - Bottom Right */}
         <div className="absolute bottom-8 right-8 w-48 h-48 shadow-2xl">
-          <VideoStream userName="You" userInitial="Y" isLocal isVideoOn={isVideoOn} />
+          <VideoStream userName={seekerName} userInitial={seekerInitial} isLocal isVideoOn={isVideoOn} />
         </div>
 
         {/* Call Duration */}

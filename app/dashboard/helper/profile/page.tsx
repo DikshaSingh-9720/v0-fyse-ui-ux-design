@@ -1,55 +1,77 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState, useEffect } from "react"
+import { getCurrentUser, updateUserProfile } from "@/lib/auth"
+import { ProfileCard } from "@/components/dashboard/profile-card"
+import { ProfileEditModal } from "@/components/dashboard/profile-edit-modal"
+import { Star, Users, Clock, TrendingUp } from "lucide-react"
 
 export default function HelperProfilePage() {
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+  })
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [stats, setStats] = useState([
+    { label: "Rating", value: "4.8", icon: Star },
+    { label: "People Helped", value: 156, icon: Users },
+    { label: "Available", value: "12 hrs", icon: Clock },
+    { label: "Response Time", value: "2 min", icon: TrendingUp },
+  ])
+
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      setProfile({
+        name: currentUser.profile?.name || "",
+        email: currentUser.email,
+        phone: currentUser.profile?.phone || "",
+        location: currentUser.profile?.location || "",
+        bio: currentUser.profile?.bio || "",
+      })
+    }
+  }, [])
+
+  const handleSave = (formData: any) => {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      updateUserProfile(currentUser.id, {
+        name: formData.name,
+        phone: formData.phone,
+        location: formData.location,
+        bio: formData.bio,
+      })
+      setProfile(formData)
+    }
+  }
+
+  const editFields = [
+    { name: "name", label: "Professional Name" },
+    { name: "phone", label: "Phone Number" },
+    { name: "location", label: "Location" },
+    { name: "bio", label: "Professional Bio", multiline: true },
+  ]
+
   return (
     <main className="flex-1 p-8">
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Profile Settings</h1>
-
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-lg font-bold text-foreground mb-4">Helper Profile</h3>
-            <div className="space-y-4 bg-white border border-border rounded-xl p-6">
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Display Name</label>
-                <Input placeholder="Your name" className="rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Topics You Help With</label>
-                <div className="flex flex-wrap gap-2">
-                  {['Anxiety', 'Depression', 'Career', 'Relationships', 'Grief'].map((topic) => (
-                    <button
-                      key={topic}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold hover:bg-primary/20 transition"
-                    >
-                      {topic} ✓
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Bio</label>
-                <textarea
-                  placeholder="Tell seekers about your experience and background..."
-                  className="w-full p-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
-                  rows={4}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button className="bg-secondary hover:bg-secondary/90 text-white rounded-lg flex-1">
-              Save Changes
-            </Button>
-            <Button variant="outline" className="rounded-lg flex-1">
-              View Public Profile
-            </Button>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Helper Profile</h1>
+          <p className="text-muted-foreground">Manage your professional information</p>
         </div>
+
+        <ProfileCard user={profile} stats={stats} onEdit={() => setIsEditOpen(true)} />
+
+        <ProfileEditModal
+          isOpen={isEditOpen}
+          user={profile}
+          fields={editFields}
+          onClose={() => setIsEditOpen(false)}
+          onSave={handleSave}
+        />
       </div>
     </main>
   )

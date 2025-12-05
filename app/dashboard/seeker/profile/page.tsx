@@ -1,89 +1,77 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from "react"
+import { getCurrentUser, updateUserProfile } from "@/lib/auth"
+import { ProfileCard } from "@/components/dashboard/profile-card"
+import { ProfileEditModal } from "@/components/dashboard/profile-edit-modal"
+import { Heart, MessageCircle, BookOpen, TrendingUp } from "lucide-react"
 
-export default function ProfilePage() {
+export default function SeekerProfilePage() {
   const [profile, setProfile] = useState({
-    name: 'Alex',
-    email: 'alex@example.com',
-    interests: ['Anxiety', 'Career', 'Relationships'],
-    bio: 'Seeking support and connection'
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
   })
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [stats, setStats] = useState([
+    { label: "Saved Stories", value: 3, icon: Heart },
+    { label: "Chats", value: 5, icon: MessageCircle },
+    { label: "This Week", value: "7 mins", icon: BookOpen },
+    { label: "This Month", value: "28 mins", icon: TrendingUp },
+  ])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setProfile(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      setProfile({
+        name: currentUser.profile?.name || "",
+        email: currentUser.email,
+        phone: currentUser.profile?.phone || "",
+        location: currentUser.profile?.location || "",
+        bio: currentUser.profile?.bio || "",
+      })
+    }
+  }, [])
+
+  const handleSave = (formData: any) => {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      updateUserProfile(currentUser.id, {
+        name: formData.name,
+        phone: formData.phone,
+        location: formData.location,
+        bio: formData.bio,
+      })
+      setProfile(formData)
+    }
   }
+
+  const editFields = [
+    { name: "name", label: "Full Name" },
+    { name: "phone", label: "Phone Number" },
+    { name: "location", label: "Location" },
+    { name: "bio", label: "Bio", multiline: true },
+  ]
 
   return (
     <main className="flex-1 p-8">
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Profile Settings</h1>
-
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-lg font-bold text-foreground mb-4">Profile Information</h3>
-            <div className="space-y-4 bg-white border border-border rounded-xl p-6">
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Name</label>
-                <Input 
-                  name="name"
-                  value={profile.name} 
-                  onChange={handleChange}
-                  className="rounded-lg" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
-                <Input 
-                  type="email" 
-                  name="email"
-                  value={profile.email}
-                  onChange={handleChange}
-                  className="rounded-lg" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">Bio</label>
-                <textarea
-                  name="bio"
-                  value={profile.bio}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  rows={4}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-bold text-foreground mb-4">Saved Stories</h3>
-            <div className="bg-white border border-border rounded-xl p-6">
-              <p className="text-muted-foreground">You have 3 saved stories</p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-bold text-foreground mb-4">Mood History</h3>
-            <div className="bg-white border border-border rounded-xl p-6">
-              <p className="text-muted-foreground">Track your mood over time</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg flex-1">
-              Save Changes
-            </Button>
-            <Button variant="outline" className="rounded-lg flex-1">
-              Change Password
-            </Button>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">My Profile</h1>
+          <p className="text-muted-foreground">View and manage your personal information</p>
         </div>
+
+        <ProfileCard user={profile} stats={stats} onEdit={() => setIsEditOpen(true)} />
+
+        <ProfileEditModal
+          isOpen={isEditOpen}
+          user={profile}
+          fields={editFields}
+          onClose={() => setIsEditOpen(false)}
+          onSave={handleSave}
+        />
       </div>
     </main>
   )

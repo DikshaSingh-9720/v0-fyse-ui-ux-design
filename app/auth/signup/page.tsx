@@ -1,57 +1,118 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { signUp } from '@/lib/auth'
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { signUp } from "@/lib/auth"
+import { ChevronLeft } from "lucide-react"
 
 export default function SignUp() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const selectedRole = searchParams.get('role') || null
+  const selectedRole = searchParams.get("role") || null
+  const [step, setStep] = useState(selectedRole ? 1 : 0)
   const [role, setRole] = useState(selectedRole)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [profile, setProfile] = useState({
+    name: "",
+    phone: "",
+    age: "",
+    location: "",
+    bio: "",
+    interests: [] as string[],
+    topics: [] as string[],
+    experience: "",
+    certifications: "",
+  })
+
+  const handleRoleSelect = (selectedRole: string) => {
+    setRole(selectedRole)
+    setStep(1)
+  }
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setProfile((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleInterestToggle = (item: string) => {
+    if (role === "seeker") {
+      setProfile((prev) => ({
+        ...prev,
+        interests: prev.interests.includes(item) ? prev.interests.filter((i) => i !== item) : [...prev.interests, item],
+      }))
+    } else {
+      setProfile((prev) => ({
+        ...prev,
+        topics: prev.topics.includes(item) ? prev.topics.filter((t) => t !== item) : [...prev.topics, item],
+      }))
+    }
+  }
+
+  const handleStepOne = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields')
+      setError("Please fill in all fields")
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError("Passwords do not match")
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError("Password must be at least 6 characters")
       return
     }
 
+    setStep(2)
+  }
+
+  const handleStepTwo = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+
+    if (!profile.name || !profile.phone || !profile.location) {
+      setError("Please fill in all required fields")
+      return
+    }
+
+    setStep(3)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+
     try {
       setLoading(true)
-      signUp(email, password, role as string)
-      
-      // Redirect to appropriate dashboard based on role
+      signUp(email, password, role as string, profile)
       const dashboardPath = `/dashboard/${role}`
       router.push(dashboardPath)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account')
+      setError(err instanceof Error ? err.message : "Failed to create account")
     } finally {
       setLoading(false)
     }
   }
 
-  if (!role) {
+  // Role selection screen
+  if (step === 0) {
     return (
       <div className="space-y-6">
         <div className="text-center space-y-2">
@@ -61,7 +122,7 @@ export default function SignUp() {
 
         <div className="space-y-3">
           <Button
-            onClick={() => setRole('seeker')}
+            onClick={() => handleRoleSelect("seeker")}
             className="w-full h-20 bg-white border-2 border-primary hover:border-primary hover:bg-blue-50/30 text-foreground rounded-2xl flex flex-col items-center justify-center gap-1 transition"
           >
             <span className="font-bold text-lg">I'm Seeking Support</span>
@@ -69,7 +130,7 @@ export default function SignUp() {
           </Button>
 
           <Button
-            onClick={() => setRole('helper')}
+            onClick={() => handleRoleSelect("helper")}
             className="w-full h-20 bg-white border-2 border-secondary hover:border-secondary hover:bg-purple-50/30 text-foreground rounded-2xl flex flex-col items-center justify-center gap-1 transition"
           >
             <span className="font-bold text-lg">I Want to Help</span>
@@ -77,7 +138,7 @@ export default function SignUp() {
           </Button>
 
           <Button
-            onClick={() => setRole('admin')}
+            onClick={() => handleRoleSelect("admin")}
             className="w-full h-20 bg-white border-2 border-muted hover:border-muted hover:bg-gray-50/30 text-foreground rounded-2xl flex flex-col items-center justify-center gap-1 transition"
           >
             <span className="font-bold text-lg">I'm an Admin</span>
@@ -86,7 +147,7 @@ export default function SignUp() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link href="/auth/login" className="text-primary hover:underline font-semibold">
             Sign In
           </Link>
@@ -96,105 +157,248 @@ export default function SignUp() {
   }
 
   const roleLabels = {
-    seeker: 'Seeking Support',
-    helper: 'Peer Helper',
-    admin: 'Platform Admin'
+    seeker: "Seeking Support",
+    helper: "Peer Helper",
+    admin: "Platform Admin",
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Create Account</h1>
-        <p className="text-muted-foreground">Signing up as {roleLabels[role as keyof typeof roleLabels]}</p>
-        <button
-          onClick={() => setRole(null)}
-          className="text-xs text-primary hover:underline"
-        >
-          Change role
-        </button>
+  // Step 1: Email and Password
+  if (step === 1) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setStep(0)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Create Account</h1>
+            <p className="text-sm text-muted-foreground">
+              Step 1 of 3 - Signing up as {roleLabels[role as keyof typeof roleLabels]}
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleStepOne} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Password</label>
+            <Input
+              type="password"
+              placeholder="Create a strong password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Confirm Password</label>
+            <Input
+              type="password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="rounded-lg"
+            />
+          </div>
+
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold">
+            Continue
+          </Button>
+        </form>
+
+        <p className="text-center text-xs text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-primary hover:underline font-semibold">
+            Sign In
+          </Link>
+        </p>
       </div>
+    )
+  }
 
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Email</label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="rounded-lg"
-          />
+  // Step 2: Personal Information
+  if (step === 2) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setStep(1)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Personal Details</h1>
+            <p className="text-sm text-muted-foreground">Step 2 of 3 - Tell us about yourself</p>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Password</label>
-          <Input
-            type="password"
-            placeholder="Create a strong password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="rounded-lg"
-          />
-        </div>
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Confirm Password</label>
-          <Input
-            type="password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="rounded-lg"
-          />
-        </div>
+        <form onSubmit={handleStepTwo} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Full Name *</label>
+            <Input
+              name="name"
+              placeholder="Your full name"
+              value={profile.name}
+              onChange={handleProfileChange}
+              required
+              className="rounded-lg"
+            />
+          </div>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold"
-        >
-          {loading ? 'Creating Account...' : 'Create Account'}
-        </Button>
-      </form>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Phone *</label>
+            <Input
+              name="phone"
+              placeholder="Your phone number"
+              value={profile.phone}
+              onChange={handleProfileChange}
+              required
+              className="rounded-lg"
+            />
+          </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-background text-muted-foreground">Or continue with</span>
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Age</label>
+            <Input
+              name="age"
+              type="number"
+              placeholder="Your age"
+              value={profile.age}
+              onChange={handleProfileChange}
+              className="rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Location *</label>
+            <Input
+              name="location"
+              placeholder="City, Country"
+              value={profile.location}
+              onChange={handleProfileChange}
+              required
+              className="rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Bio</label>
+            <textarea
+              name="bio"
+              placeholder="Tell us a bit about yourself..."
+              value={profile.bio}
+              onChange={handleProfileChange}
+              className="w-full p-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              rows={3}
+            />
+          </div>
+
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold">
+            Continue
+          </Button>
+        </form>
       </div>
+    )
+  }
 
-      <Button variant="outline" className="w-full rounded-lg">
-        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Google
-      </Button>
+  // Step 3: Interests/Topics
+  if (step === 3) {
+    const items =
+      role === "seeker"
+        ? ["Anxiety", "Depression", "Career", "Relationships", "Grief", "Family", "Self-Esteem", "Sleep"]
+        : ["Anxiety", "Depression", "Career", "Relationships", "Grief", "Family", "Self-Esteem", "ADHD"]
 
-      <p className="text-center text-xs text-muted-foreground">
-        By signing up, you agree to our{' '}
-        <Link href="/terms" className="text-primary hover:underline">
-          Terms of Use
-        </Link>
-        {' '}and{' '}
-        <Link href="/privacy" className="text-primary hover:underline">
-          Privacy Policy
-        </Link>
-      </p>
-    </div>
-  )
+    const selectedItems = role === "seeker" ? profile.interests : profile.topics
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setStep(2)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {role === "seeker" ? "Areas of Interest" : "Topics You Help With"}
+            </h1>
+            <p className="text-sm text-muted-foreground">Step 3 of 3 - Choose what matters to you</p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <p className="text-sm text-muted-foreground mb-4">Select the areas you're interested in or can help with</p>
+            <div className="flex flex-wrap gap-3">
+              {items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => handleInterestToggle(item)}
+                  className={`px-4 py-2 rounded-full font-semibold transition ${
+                    selectedItems.includes(item)
+                      ? role === "seeker"
+                        ? "bg-primary text-white"
+                        : "bg-secondary text-white"
+                      : "bg-gray-100 text-foreground hover:bg-gray-200"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white rounded-lg font-semibold ${
+              role === "seeker" ? "bg-primary hover:bg-primary/90" : "bg-secondary hover:bg-secondary/90"
+            }`}
+          >
+            {loading ? "Creating Account..." : "Complete Sign Up"}
+          </Button>
+        </form>
+
+        <p className="text-center text-xs text-muted-foreground">
+          By signing up, you agree to our{" "}
+          <Link href="/terms" className="text-primary hover:underline">
+            Terms of Use
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-primary hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
+      </div>
+    )
+  }
 }
